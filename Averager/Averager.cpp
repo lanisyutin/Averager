@@ -52,9 +52,9 @@ void main() {
 	int Ny;
 	int time_count = 0;
 	vector<DataPoint> SpaceSectionOverTime;
-
+	bool general_avg = false;
 	path dir1;
-	config >> dir1 >> X >> Ny;
+	config >> dir1 >> X >> Ny >> general_avg;
 	out.open("AveragingOverTime[x=" + to_string(X) + "].plt");
 	cout << "Averagin over time date from " << dir1 << endl;
 
@@ -67,15 +67,17 @@ void main() {
 
 			else if (is_directory(dir1))
 			{
-				for (directory_entry& x : directory_iterator(dir1)) {
+				for (directory_entry& file : directory_iterator(dir1)) {
 					int n = 0;
 					cout << '.';
-					if (is_regular_file(x.path()) && x.path().extension() == ".plt"&& x.path().filename().string().find("step") !=-1) {
+					if (is_regular_file(file.path()) && file.path().extension() == ".plt"&&( file.path().filename().string().find("step") !=-1||general_avg)) {
 						time_count++;
-						in1.open((x.path()).c_str());
+						in1.open((file.path()).c_str());
 						string s1;
 						vector<DataPoint> SpaceSection;
-						for (int i = 0; i < 4; i++)
+						int row_number;
+						(!general_avg) ? row_number = 4 : row_number = 2;
+						for (int i = 0; i < row_number; i++)
 							getline(in1, s1);
 						while (!in1.eof()) {
 							double x;
@@ -88,7 +90,7 @@ void main() {
 							in1 >> x >> y >> p >> u >> v >> fx >> fy;
 							//int index = (int)s1.find_first_of(' ');
 							//string x_current = s1.substr(0, index);
-							if (X == x) {
+							if (X == x||general_avg) {
 								DataPoint p(x, y, p, u, v, fx, fy);
 								SpaceSection.push_back(p);
 								//out << s1 << endl;
@@ -108,7 +110,7 @@ void main() {
 						}
 					}
 				}
-				out << "title = \"Averaging over time in x= "+ to_string(X)+"\"\nVariables = x y p u v fx fy" << endl;
+				out << "title = \"Averaging over time in x="+ to_string(X)+"\"\nVariables = x y p u v fx fy" << endl;
 				for (auto point : SpaceSectionOverTime) {
 					out << point.x / time_count << " " 
 						<< point.y / time_count << " " 
